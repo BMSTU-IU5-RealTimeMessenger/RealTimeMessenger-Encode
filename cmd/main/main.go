@@ -13,6 +13,7 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -62,17 +63,17 @@ func (s *Server) Code(c *gin.Context) {
 	//log.Println(" {\n    \"test\": \"hello\"\n}\n")
 	// Один закодированный кадр
 	encodedData := encode.DataEncode(data)
-	//log.Println("EncodeData:\n", string(encodedData))
+	//log.Println("EncodeData:\n", encodedData)
 	// Один исправленный кадр (сегмент)
 	decodedData, numberErrors := decode.DataDecode(encodedData)
 	log.Println("DecodeData:\n", string(decodedData))
-	log.Println("Errors:\n", numberErrors)
+	//log.Println("Errors:\n", numberErrors)
 	hadErrors := false
 	if numberErrors > 0 {
 		hadErrors = true
 	}
 
-	if err := s.send(data, hadErrors); err != nil {
+	if err := s.send(decodedData, hadErrors); err != nil {
 		log.Println("Sending error", err)
 		return
 	}
@@ -91,26 +92,47 @@ func main() {
 }
 
 type Payload struct {
-	Segment []byte `json:"segment"`
+	Segment string `json:"segment"`
 	Error   bool   `json:"error"`
 }
 
+//type Segment struct {
+//	Data   string `json:"data"`
+//	Time   int64  `json:"time"`
+//	Number int    `json:"number"`
+//	Count  int    `json:"count"`
+//}
+
 func (s *Server) send(data []byte, hadError bool) error {
+	//var segment Segment
+	//err := json.Unmarshal(data, &segment)
+	//if err != nil {
+	//	log.Println(err)
+	//	return err
+	//}
+	strData := string(data)
+	resultString := strings.ReplaceAll(strData, "\\ufffd", "")
+	resultString = strings.ReplaceAll(strData, "\\ufffd", "")
+	//resultString = strings.ReplaceAll(strData, "\ufffdоа", "")
 	payload := Payload{
-		Segment: data,
+		Segment: resultString,
 		Error:   hadError,
 	}
+	//log.Println("DATA: ", string(data))
+	//log.Println(payload.Segment)
 
 	jsonData, err := json.Marshal(payload)
 	if err != nil {
 		return err
 	}
 
-	req, err := http.NewRequest("POST", "http://"+s.Destination+"/take", bytes.NewBuffer(jsonData))
+	req, err := http.NewRequest("POST", "http://"+s.Destination, bytes.NewBuffer(jsonData))
+	//log.Println(payload)
 	if err != nil {
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
+	log.Println("json:", string(jsonData))
 
 	resp, err := s.HTTPClient.Do(req)
 	if err != nil {

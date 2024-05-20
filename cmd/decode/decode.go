@@ -1,9 +1,12 @@
 package decode
 
+import "log"
+
 const generator = 0b1011
 
 // Функция для декодирования 7-битного блока
 func blockDecode(block byte) (byte, bool) {
+	//log.Println("Block before decode", block)
 	originalBlock := block
 	// Выполняем деление блоков, чтобы получить синдром (контрольные биты)
 	for i := 6; i >= 3; i-- {
@@ -15,8 +18,14 @@ func blockDecode(block byte) (byte, bool) {
 	// Если синдром не нулевой, значит есть ошибка
 	if block != 0 {
 		// Ищем и исправляем ошибку
+		// Получаем позицию единичной ошибки из синдрома
+		log.Println("error block", originalBlock)
+
 		errorPosition := int(block & 0x07)
+		log.Println("error position", errorPosition)
+		// Инвертируем бит в позиции ошибки для исправления
 		originalBlock ^= 1 << errorPosition
+		log.Println("without error block", originalBlock)
 		return originalBlock >> 3, true
 	}
 

@@ -9,7 +9,7 @@ import (
 // Порождающий полином в бинарном представлении
 const generator = 0b1011
 
-// Функция для деления полинома a(x) на порождающий полином g(x)
+// Функция для деления нашего полинома на порождающий полином generator
 func divide(block byte, generator byte) byte {
 	for i := 6; i >= 3; i-- {
 		if (block>>i)&1 != 0 {
@@ -21,6 +21,7 @@ func divide(block byte, generator byte) byte {
 
 // Функция для кодирования 4-битного блока
 func blockEncode(block byte) byte {
+	//log.Println("Block before encode", block)
 	// Сдвигаем блок на 3 позиции влево, чтобы освободить место для контрольных битов
 	originalBlock := block << 3
 
@@ -30,6 +31,8 @@ func blockEncode(block byte) byte {
 	// Прибавляем остаток к исходному блоку
 	encodedBlock := originalBlock | remainder
 
+	//log.Println("Block after encoded", encodedBlock)
+
 	return encodedBlock
 }
 
@@ -37,7 +40,7 @@ func blockEncode(block byte) byte {
 func DataEncode(data []byte) []byte {
 	var encodedData []byte
 	for _, b := range data {
-		// Кодируем первую половину байта (первые 4 бита)
+		// Кодируем первую половину байта (первые 4 бита - 0x0F = 1111)
 		block1 := (b >> 4) & 0x0F
 		encodedBlock1 := blockEncode(block1)
 		encodedData = append(encodedData, encodedBlock1)
@@ -50,14 +53,19 @@ func DataEncode(data []byte) []byte {
 
 	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
 	// Вносим ошибку с вероятностью 10% в один случайный бит из всего массива encodedData
-	if rng.Float64() < 0.1 {
+	if rng.Float64() < 1 {
+		log.Println("Without error", encodedData)
+
 		// Выбираем случайный байт в массиве encodedData
 		bytePosition := rng.Intn(len(encodedData))
 		// Выбираем случайный бит в выбранном байте
 		bitPosition := rng.Intn(8)
 		// Инвертируем выбранный бит
 		encodedData[bytePosition] ^= 1 << bitPosition
+		log.Println("Error number ", bytePosition, "error ", bitPosition)
 		log.Println("Error appeared")
+		log.Println("With error", encodedData)
+		log.Println()
 	}
 
 	return encodedData
