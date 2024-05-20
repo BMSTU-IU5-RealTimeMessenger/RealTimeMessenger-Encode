@@ -48,17 +48,17 @@ func (s *Server) Code(c *gin.Context) {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
+	c.Status(http.StatusOK)
+	log.Println("Got request with data:\n", string(data))
 
 	// Создаем новый генератор случайных чисел с сидом на основе текущего времени
 	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
 	// Проверяем вероятность потери кадра
 	if rng.Float64() < 0.015 {
 		log.Println("Frame lost")
-		c.Status(http.StatusOK)
 		return
 	}
 
-	log.Println("Got request with data:\n", string(data))
 	//log.Println(" {\n    \"test\": \"hello\"\n}\n")
 	// Один закодированный кадр
 	encodedData := encode.DataEncode(data)
@@ -73,12 +73,11 @@ func (s *Server) Code(c *gin.Context) {
 	}
 
 	if err := s.send(data, hadErrors); err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
+		log.Println("Sending error", err)
 		return
 	}
 
 	//time.Sleep(100 * time.Second)
-	c.Status(http.StatusOK)
 }
 
 func main() {
