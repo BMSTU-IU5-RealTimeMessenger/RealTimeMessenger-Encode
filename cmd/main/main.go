@@ -62,7 +62,7 @@ func (s *Server) Code(c *gin.Context) {
 	//log.Println(" {\n    \"test\": \"hello\"\n}\n")
 	// Один закодированный кадр
 	encodedData := encode.DataEncode(data)
-	log.Println("EncodeData:\n", string(encodedData))
+	//log.Println("EncodeData:\n", string(encodedData))
 	// Один исправленный кадр (сегмент)
 	decodedData, numberErrors := decode.DataDecode(encodedData)
 	log.Println("DecodeData:\n", string(decodedData))
